@@ -151,10 +151,6 @@ def HA_pillar(features, max_num, pc_range, actual_num, use_intensity=False):
     features shape [pillar_points, max_points, dim]
     points absolute coords: features[:,:,0]->x,  features[:,:,1]->y, features[:,:,2]->z
     """
-    # if use_intensity:
-    #     height_count = torch.zeros(features.shape[0], features.shape[1]+1).to(features.device)
-    # else:
-    #     height_count = torch.zeros(features.shape[0], features.shape[1]).to(features.device)
     max_value, min_value = features[:, :, 2].max(), features[:, :, 2].min()
     scale = (max_value - min_value) / max_num
     coord = torch.arange(0, max_num).to(features.device) + (min_value / scale).round()
@@ -163,6 +159,10 @@ def HA_pillar(features, max_num, pc_range, actual_num, use_intensity=False):
     assert coord.shape[0] == max_num
     coord = coord.view(1,1,-1)
     h_hist =(h_int==coord).float().sum(-2)
+    if use_intensity:
+        feat_intensity = features[:, :, 3].sum(-1) / actual_num
+        feat_intensity = feat_intensity.unsqueeze(-1)
+        h_hist =  torch.cat((h_hist, feat_intensity), dim=1)
     # for i in range(features.shape[0]):
     #     # height_count[i] = torch.histc(features[i, :, 2][:int(actual_num[i])], bins=max_num, min=features[i, :, 2][:int(actual_num[i])].min(), max=features[i, :, 2][:int(actual_num[i])].max())
     #     his_z = torch.histc(features[i, :, 2][:int(actual_num[i])], bins=max_num, min=features[:, :, 2].min(), max=features[:, :, 2].max()) / max_num
@@ -483,6 +483,7 @@ class HA_PillarVFE(VFETemplate):
     def __init__(self, model_cfg, num_point_features, voxel_size, point_cloud_range, **kwargs):
         super().__init__(model_cfg=model_cfg)
         self.use_norm = self.model_cfg.USE_NORM #True
+        self.use_intensity = self.model_cfg.USE_INTENSITY
         self.with_distance = self.model_cfg.WITH_DISTANCE #False
         self.use_absolute_xyz = self.model_cfg.USE_ABSLOTE_XYZ #True
         self.base_voxel_size = voxel_size[0]
@@ -492,7 +493,10 @@ class HA_PillarVFE(VFETemplate):
             num_point_features += 1
         self.num_filters = self.model_cfg.NUM_FILTERS #[64]
         assert len(self.num_filters) > 0
-        num_filters = [32] + list(self.num_filters)
+        if self.use_intensity:
+            num_filters = [32+1] + list(self.num_filters)
+        else:
+            num_filters = [32] + list(self.num_filters)
 
         pfn_layers = []
         for i in range(len(num_filters) - 1):
@@ -544,7 +548,7 @@ class HA_PillarVFE(VFETemplate):
             features.append(points_dist)
         features = torch.cat(features, dim=-1) #original: xyzitensity, pillar内点的xyz均值，以及每个点相对于pillar中心点的xyz offset差值。
         voxel_count = features.shape[1]
-        features = HA_pillar(features, voxel_count, self.pc_range, voxel_num_points)
+        features = HA_pillar(features, voxel_count, self.pc_range, voxel_num_points, self.use_intensity)
         # mask = self.get_paddings_indicator(voxel_num_points, voxel_count, axis=0)
         # mask = torch.unsqueeze(mask, -1).type_as(voxel_features)
         # features *= mask
