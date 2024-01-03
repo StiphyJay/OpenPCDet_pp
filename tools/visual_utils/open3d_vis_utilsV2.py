@@ -80,7 +80,7 @@ def text_3d(text, pos, direction=None, degree=0.0, font='/mnt/c/Windows/Fonts/Yu
     pcd.transform(trans)
     return pcd
 
-def draw_scenes(points, gt_boxes=None, pred_boxes=None, calib=None, pred_labels=None, pred_scores=None, point_colors=None, draw_origin=True):
+def draw_scenes(points, gt_boxes=None, pred_boxes=None, calib=None, base_boxes=None, pred_labels=None, pred_scores=None, point_colors=None, draw_origin=True):
     vis = open3d.visualization.Visualizer()
     vis.create_window()
     vis.get_render_option().point_size = 1.0
@@ -106,6 +106,10 @@ def draw_scenes(points, gt_boxes=None, pred_boxes=None, calib=None, pred_labels=
 
     if pred_boxes is not None:
         vis = draw_box(vis, pred_boxes, (0, 1, 0), calib, pred_labels, pred_scores)
+
+    if base_boxes is not None:
+        vis = draw_box(vis, base_boxes, (1, 0, 0), calib, pred_labels, pred_scores)
+
 
     vis.run()
     vis.destroy_window()
