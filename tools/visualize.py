@@ -1,10 +1,13 @@
 import argparse
+import glob
 from pathlib import Path
 import mayavi.mlab as mlab
 from visual_utils import visualize_utils as V
+from visual_utils import kitti_util as utils
 OPEN3D_FLAG = True
-import kitti_util as utils
+import pickle
 import numpy as np
+import torch
 import os
 import pdb
     
@@ -141,16 +144,6 @@ def main():
                 obj.print_object()
                 n_obj += 1
         show_lidar_with_boxes(pc_velo, objects, calib, objects_pred)
-    # V.draw_scenes(
-    #             points=data_dict['points'][:, 1:], gt_boxes=gt_boxes[mapped_array!=0], ref_boxes=pred_dicts[0]['pred_boxes'],
-    #             ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
-    #         )
-    # # print("Name: {}, Age: {}".format(name, age))
-    # if not OPEN3D_FLAG:
-    #     mlab.show(stop=True)
-
-    # logger.info('Demo done.')
-
 
 if __name__ == '__main__':
     main()

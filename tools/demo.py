@@ -111,6 +111,7 @@ def main():
             pred_dicts, _ = model.forward(data_dict)
             mapped_array = np.array([mapping_dict[item] for item in gt_dict['name']])
             gt_boxes = np.concatenate([gt_dict["location"],gt_dict["dimensions"],gt_dict["rotation_y"].reshape(-1, 1)], axis=1)
+            pdb.set_trace()
             V.draw_scenes(
                 points=data_dict['points'][:, 1:], gt_boxes=gt_boxes[mapped_array!=0], ref_boxes=pred_dicts[0]['pred_boxes'],
                 ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
