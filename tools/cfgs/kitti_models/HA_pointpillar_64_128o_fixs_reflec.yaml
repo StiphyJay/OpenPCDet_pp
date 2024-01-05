@@ -56,13 +56,13 @@ MODEL:
         WITH_DISTANCE: False
         USE_ABSLOTE_XYZ: True
         USE_NORM: True
-        USE_INTENSITY: False
-        NUM_FILTERS: [64]
+        USE_INTENSITY: True
+        NUM_FILTERS: [128]
         PC_RANGE: [0, -39.68, -3, 69.12, 39.68, 1]
 
     MAP_TO_BEV:
         NAME: PointPillarScatter
-        NUM_BEV_FEATURES: 64
+        NUM_BEV_FEATURES: 128
 
     BACKBONE_2D:
         NAME: BaseBEVBackbone
