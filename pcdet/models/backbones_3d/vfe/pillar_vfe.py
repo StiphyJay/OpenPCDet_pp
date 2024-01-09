@@ -162,18 +162,21 @@ def HA_pillar(features, max_num, pc_range, actual_num, use_intensity=False):
     coord = coord.view(1,1,-1)
     h_hist = (h_int==coord).float().sum(-2) / max_num
     if use_intensity:
-        feat_intensity = features[:, :, 3].sum(-1) / actual_num
-        feat_intensity = feat_intensity.unsqueeze(-1)
-        h_hist =  torch.cat((h_hist, feat_intensity), dim=1)
-    # for i in range(features.shape[0]):
-    #     # height_count[i] = torch.histc(features[i, :, 2][:int(actual_num[i])], bins=max_num, min=features[i, :, 2][:int(actual_num[i])].min(), max=features[i, :, 2][:int(actual_num[i])].max())
-    #     his_z = torch.histc(features[i, :, 2][:int(actual_num[i])], bins=max_num, min=features[:, :, 2].min(), max=features[:, :, 2].max()) / max_num
-    #     #avg_intensity = torch.mean(features[i, :, 3][:int(actual_num[i])]).unsqueeze(0)
-    #     if use_intensity:
-    #         height_count[i] = torch.cat((his_z, avg_intensity)).to(features.device)
-    #     else:
-    #         height_count[i] = his_z
-    # height_count = torch.stack(height_count)
+        intensity = features[:, :, 3] #[num_pillar, num_points]
+        ind = h_int.squeeze(-1).to(torch.int64) + int(abs(min_value / scale)) #[num_pillar, num_points]
+        inten_hist = torch.zeros_like(h_hist)
+        num_points = torch.zeros_like(h_hist)
+        ind[ind == (max_num + 1)] = 0
+        for i in range(max_num): #遍历pillar内最大点的维度 pillar 20
+            values = inten_hist.gather(1, ind[:,i].unsqueeze(1)).add_(intensity[:,i].unsqueeze(1))
+            inten_hist.scatter_(1, ind[:,i].unsqueeze(1), values)
+            now_points = num_points.gather(1,ind[:,i].unsqueeze(1)).add_(1)
+            num_points.scatter_(1,ind[:,i].unsqueeze(1), now_points)
+        mask = h_hist!=0 #根据各个bin的count
+        inten_histV2 = torch.zeros_like(h_hist)
+        inten_histV2[mask] = inten_hist[mask] / (num_points[mask])
+        # inten_hist = torch.nan_to_num(inten_hist, nan=0.0).contiguous()
+        h_hist =  torch.cat((h_hist, inten_histV2), dim=1).contiguous()
     return h_hist
 
 class PFNLayer(nn.Module):
@@ -496,7 +499,7 @@ class HA_PillarVFE(VFETemplate):
         self.num_filters = self.model_cfg.NUM_FILTERS #[64]
         assert len(self.num_filters) > 0
         if self.use_intensity:
-            num_filters = [int(self.num_filters[0]/2) +1] + list(self.num_filters)
+            num_filters = [int(self.num_filters[0]/2) *2] + list(self.num_filters)
         else:
             num_filters = [int(self.num_filters[0]/2)] + list(self.num_filters)
 

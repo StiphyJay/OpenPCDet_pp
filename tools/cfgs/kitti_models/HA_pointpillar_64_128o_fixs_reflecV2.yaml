@@ -15,11 +15,12 @@ DATA_CONFIG:
 
         - NAME: transform_points_to_voxels
           VOXEL_SIZE: [0.16, 0.16, 4]
-          MAX_POINTS_PER_VOXEL: 32
+          MAX_POINTS_PER_VOXEL: 64 #32
           MAX_NUMBER_OF_VOXELS: {
             'train': 16000,
             'test': 40000
           }
+
     DATA_AUGMENTOR:
         DISABLE_AUG_LIST: ['placeholder']
         AUG_CONFIG_LIST:
@@ -51,15 +52,17 @@ MODEL:
     NAME: PointPillar
 
     VFE:
-        NAME: PillarVFE
+        NAME: HA_PillarVFE
         WITH_DISTANCE: False
         USE_ABSLOTE_XYZ: True
         USE_NORM: True
-        NUM_FILTERS: [64]
+        USE_INTENSITY: True
+        NUM_FILTERS: [128]
+        PC_RANGE: [0, -39.68, -3, 69.12, 39.68, 1]
 
     MAP_TO_BEV:
         NAME: PointPillarScatter
-        NUM_BEV_FEATURES: 64
+        NUM_BEV_FEATURES: 128
 
     BACKBONE_2D:
         NAME: BaseBEVBackbone
@@ -143,8 +146,8 @@ MODEL:
 
 
 OPTIMIZATION:
-    BATCH_SIZE_PER_GPU: 8 #4
-    NUM_EPOCHS: 80
+    BATCH_SIZE_PER_GPU: 4 #4
+    NUM_EPOCHS: 80 #
 
     OPTIMIZER: adam_onecycle
     LR: 0.003
