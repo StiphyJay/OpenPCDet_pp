@@ -499,7 +499,7 @@ class HA_PillarVFE(VFETemplate):
         self.num_filters = self.model_cfg.NUM_FILTERS #[64]
         assert len(self.num_filters) > 0
         if self.use_intensity:
-            num_filters = [int(self.num_filters[0]/2) *2] + list(self.num_filters)
+            num_filters = [int(self.num_filters[0]/2)] + list(self.num_filters)
         else:
             num_filters = [int(self.num_filters[0]/2)] + list(self.num_filters)
 
